@@ -16,6 +16,8 @@ struct Student{
     int entrollEng;
     int entrollSci;
     int authenticated;
+    float GPA_average;
+    char grade[10];
 };
 
 struct Lecturer{
@@ -35,7 +37,11 @@ int loadUsers(struct Student s[]);
 void SaveUsers(struct Student s[],int n);
 int Login_Lec(struct Lecturer *lec);
 void EnterMarks(struct Student s[],int n);
-int Login_Stu(struct Student s[], int *n);
+int Login_Stu(struct Student s[], int n);
+int Calc_average(struct Student s[], int index);
+void Grading(struct Student s[], int i);
+void Display_Entrollment(struct Student s[], int i);
+void Print_grade(struct Student s[], int i);
 
 int main()
 {
@@ -56,12 +62,13 @@ int main()
      getchar();
 
      switch(user_choice){
-     case 1:{
-        if(Login_Stu(s, &n)){
+        case 1:{
+        int i = Login_Stu(s, n);
+        if(i !=-1){
             int std_choice;
             do{
                 printf("\n==== SELECT OPERATION ====\n");
-                printf("1: View Entrollment\n");
+                printf("1: View Entrolment\n");
                 printf("2: View Grades\n");
                 printf("3: Exit\n");
                 printf("***********\n");
@@ -71,16 +78,17 @@ int main()
 
                 switch(std_choice){
                 case 1:{
-                  Display(s,n);
+                  Display_Entrollment(s,i);
                   break;
                 }
 
                 case 2:{
+                  Print_grade(s,i);
                   break;
                 }
 
                 case 3:{
-                  printf("Returning to Homapage ......\n");
+                  printf("Returning to Homepage ......\n");
                   break;
                 }
                 default:
@@ -208,6 +216,8 @@ void AddStudents(struct Student s[],int *n){
     // Initializing subject scores to 0.0
     s[*n].Math = s[*n].Eng = s[*n].Sci = 0.0;
     s[*n].entrollMath = s[*n].entrollEng = s[*n].entrollSci = 0;
+    s[*n].GPA_average = 0.0;
+    strcpy(s[*n].grade, "PENDING");
   }
   if (*n >= MAX_USERS) {
      printf("Maximum Student limit reached.\n");
@@ -334,7 +344,7 @@ int Login_Lec(struct Lecturer *lec){
     return 0;
 }
 
-int Login_Stu(struct Student s[], int *n){
+int Login_Stu(struct Student s[], int n){
     int id, trials = 0;
     char password[20];
 
@@ -346,10 +356,10 @@ int Login_Stu(struct Student s[], int *n){
         fgets(password, sizeof(password), stdin);
         password[strcspn(password, "\n")] = 0;
 
-        for(int i = 0; i < *n; i++){
+        for(int i = 0; i < n; i++){
             if(s[i].ID == id && strcmp(s[i].password, password) == 0){
                 printf("Login Successful! Welcome %s\n", s[i].name);
-                return 1;
+                return i;
             }
         }
 
@@ -358,7 +368,7 @@ int Login_Stu(struct Student s[], int *n){
     }
 
     printf("Too many failed attempts.\n");
-    return 0;
+    return -1;
 }
 
 void EnterMarks(struct Student s[],int n){
@@ -408,7 +418,8 @@ void EnterMarks(struct Student s[],int n){
             }
 
             getchar();
-
+            Calc_average(s, i);
+            Grading(s, i);
             //Printing the updated Marks
             printf("\n--- Student Found ---\n");
             printf("+--------------------+------------+--------------+----------+---------+---------+---------+---------+\n");
@@ -426,4 +437,66 @@ void EnterMarks(struct Student s[],int n){
       printf("Student not found..\n");
     }
 
+}
+int Calc_average(struct Student s[], int index){
+    int subjects = 0;
+    float sum = 0.0;
+
+    if (s[index].entrollMath) {
+        sum += s[index].Math;
+        subjects++;
+    }
+    if (s[index].entrollEng) {
+        sum += s[index].Eng;
+        subjects++;
+    }
+    if (s[index].entrollSci) {
+        sum += s[index].Sci;
+        subjects++;
+    }
+
+    if (subjects > 0) {
+        s[index].GPA_average = sum / subjects;
+    } else {
+        s[index].GPA_average = 0.0;
+    }
+
+    return s[index].GPA_average;
+}
+void Grading(struct Student s[], int i){
+    if(s[i].GPA_average>=70){
+        strcpy(s[i].grade, "A");
+    }else if(s[i].GPA_average>=60 && s[i].GPA_average<70){
+        strcpy(s[i].grade, "B");
+    }else if(s[i].GPA_average>=50 && s[i].GPA_average<60){
+        strcpy(s[i].grade, "C");
+    }else if(s[i].GPA_average>=40 && s[i].GPA_average<50){
+        strcpy(s[i].grade, "D");
+    }else {
+        strcpy(s[i].grade, "F");
+    }
+
+}
+void Display_Entrollment(struct Student s[], int i){
+        printf("\n--- Student Details ---\n");
+        printf("+----------------+----------+--------------+----------+\n");
+        printf("| %-14s | %-8s | %-12s | %-8s |\n","NAME","ID","STATUS","COURSE");
+        printf("| %-14s | %-8d | %-12s | %-8s |\n",s[i].name,s[i].ID,s[i].status,s[i].course);
+        printf("+----------------+----------+--------------+----------+\n");
+        printf("Enrolled Subjects:\n");
+         if (s[i].entrollMath) printf(" - Math\n");
+         if (s[i].entrollEng)  printf(" - English\n");
+         if (s[i].entrollSci)  printf(" - Science\n");
+
+         if (!s[i].entrollMath && !s[i].entrollEng && !s[i].entrollSci)
+           printf(" - None\n");
+}
+void Print_grade(struct Student s[], int i) {
+    printf("+------------+------------+------------+---------+---------+---------+-------------+--------+\n");
+    printf("| %-10s | %-10s | %-10s | %-7s | %-7s | %-7s | %-11s | %-6s |\n",
+           "ID", "STATUS", "COURSE", "MATH", "ENG", "SCI", "GPA_Avg", "GRADE");
+    printf("+------------+------------+------------+---------+---------+---------+-------------+--------+\n");
+    printf("| %-10d | %-10s | %-10s | %-7.2f | %-7.2f | %-7.2f | %-11.2f | %-6s |\n",
+           s[i].ID, s[i].status, s[i].course, s[i].Math, s[i].Eng, s[i].Sci, s[i].GPA_average, s[i].grade);
+    printf("+------------+------------+------------+---------+---------+---------+-------------+--------+\n");
 }
