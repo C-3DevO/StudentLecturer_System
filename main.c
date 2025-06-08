@@ -15,7 +15,7 @@ struct Student{
     int entrollMath;
     int entrollEng;
     int entrollSci;
-
+    int authenticated;
 };
 
 struct Lecturer{
@@ -35,6 +35,7 @@ int loadUsers(struct Student s[]);
 void SaveUsers(struct Student s[],int n);
 int Login_Lec(struct Lecturer *lec);
 void EnterMarks(struct Student s[],int n);
+int Login_Stu(struct Student s[], int *n);
 
 int main()
 {
@@ -44,59 +45,119 @@ int main()
     lec.loginpass = "Adm@123";
     lec.authenticated = 0;
     int n = loadUsers(s);
-    if(Login_Lec(&lec)){
-       int choice;
+    int user_choice;
     do{
      printf("\n==== WELCOME ====\n");
-     printf("1: Add Students\n");
-     printf("2: Display\n");
-     printf("3: Search Student\n");
-     printf("4: Entroll Student\n");
-     printf("5: Enter Marks\n");
-     printf("6: Exit\n");
-     printf("***********\n");
-     printf("Choice:");
-     scanf("%d",&choice);
+     printf("1: Student\n");
+     printf("2: Lecturer\n");
+     printf("3: Exit\n");
+     printf("Choice: ");
+     scanf("%d", &user_choice);
+     getchar();
 
-     switch(choice){
+     switch(user_choice){
      case 1:{
-      AddStudents(s,&n);
-      SaveUsers(s,n);
-      break;
-    }
+        if(Login_Stu(s, &n)){
+            int std_choice;
+            do{
+                printf("\n==== SELECT OPERATION ====\n");
+                printf("1: View Entrollment\n");
+                printf("2: View Grades\n");
+                printf("3: Exit\n");
+                printf("***********\n");
+                printf("Choice:");
+                scanf("%d",&std_choice);
+                getchar();
+
+                switch(std_choice){
+                case 1:{
+                  Display(s,n);
+                  break;
+                }
+
+                case 2:{
+                  break;
+                }
+
+                case 3:{
+                  printf("Returning to Homapage ......\n");
+                  break;
+                }
+                default:
+                 printf("Invalid Input");
+                 break;
+                }
+            } while(std_choice !=3);
+        }
+        break;
+     }
      case 2:{
-      Display(s,n);
-      SaveUsers(s,n);
-      break;
-    }
-     case 3:{
-      SearchStudent(s,n);
-      break;
-     }
-     case 4: {
-      EntrollStudent(s,n);
-      SaveUsers(s,n);
-      break;
-     }
-     case 5: {
-      EnterMarks(s,n);
-      SaveUsers(s,n);
-      break;
-     }
-     case 6:{
-      SaveUsers(s,n);
-      printf("Exiting Program ......\n");
-      break;
-    }
-     default:
-      printf("Invalid Input");
-      break;
-    }
-    } while(choice !=6);
+     if(Login_Lec(&lec)){
+       int choice;
+       do{
+       printf("\n==== WELCOME ====\n");
+       printf("1: Add Students\n");
+       printf("2: Display\n");
+       printf("3: Search Student\n");
+       printf("4: Entrol Student\n");
+       printf("5: Enter Marks\n");
+       printf("6: Exit\n");
+       printf("***********\n");
+       printf("Choice:");
+       scanf("%d",&choice);
+
+       switch(choice){
+       case 1:{
+        AddStudents(s,&n);
+        SaveUsers(s,n);
+        break;
+        }
+       case 2:{
+        Display(s,n);
+        SaveUsers(s,n);
+        break;
+        }
+       case 3:{
+        SearchStudent(s,n);
+        break;
+        }
+       case 4: {
+        EntrollStudent(s,n);
+        SaveUsers(s,n);
+        break;
+        }
+       case 5: {
+        EnterMarks(s,n);
+        SaveUsers(s,n);
+        break;
+        }
+       case 6:{
+        SaveUsers(s,n);
+        printf("Exiting Program ......\n");
+        break;
+        }
+       default:
+        printf("Invalid Input");
+        break;
+        }
+
+     } while(choice !=6);
        }else {
        printf("Contact Admin!!!!!!!!!!");
        }
 
+       }
+      case 3: {
+       printf("Exiting Program ......\n");
+       break;
+
+      }
+      default:
+        printf("Invalid Input");
+        break;
+       }
+
+      } while(user_choice !=3);
     return 0;
 }
 void AddStudents(struct Student s[],int *n){
@@ -272,6 +333,34 @@ int Login_Lec(struct Lecturer *lec){
     lec->authenticated = 0;
     return 0;
 }
+
+int Login_Stu(struct Student s[], int *n){
+    int id, trials = 0;
+    char password[20];
+
+    while(trials < MAX_TIMES){
+        printf("Enter your Student ID: ");
+        scanf("%d", &id);
+        getchar();
+        printf("Enter your Password: ");
+        fgets(password, sizeof(password), stdin);
+        password[strcspn(password, "\n")] = 0;
+
+        for(int i = 0; i < *n; i++){
+            if(s[i].ID == id && strcmp(s[i].password, password) == 0){
+                printf("Login Successful! Welcome %s\n", s[i].name);
+                return 1;
+            }
+        }
+
+        trials++;
+        printf("Incorrect login. Attempts left: %d\n", MAX_TIMES - trials);
+    }
+
+    printf("Too many failed attempts.\n");
+    return 0;
+}
+
 void EnterMarks(struct Student s[],int n){
    int searchID;
    int found = 0;
@@ -337,10 +426,4 @@ void EnterMarks(struct Student s[],int n){
       printf("Student not found..\n");
     }
 
-}
-void PrintStudentDetails(struct Student s) {
-    printf("+--------------------+------------+--------------+----------+---------+---------+---------+\n");
-    printf("| %-20s | %-12s | %-12s | %-10s | %-9s | %-9s | %-9s |\n","NAME","ID","STATUS","COURSE","MATH","ENG","SCI");
-    printf("| %-20s | %-12d | %-12s | %-10s | %-9.2f | %-9.2f | %-9.2f |\n",s.name,s.ID,s.status,s.course,s.Math, s.Eng, s.Sci);
-    printf("+--------------------+------------+--------------+----------+---------+---------+---------+\n");
 }
